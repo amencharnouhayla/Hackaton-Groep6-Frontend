@@ -215,6 +215,18 @@
 									press="onValidatePress"
 									class="sapUiTinyMargin"
 								/>
+
+								<Button
+									id="restart"
+									visible= "false"
+									activeIcon=""
+									icon="sap-icon://approvals"
+									text="{i18n>restartWaarden}"
+									width="210px"
+									press="onStartPress"
+									class="sapUiTinyMargin"
+								/>
+								
 								<HBox id="bot1HBox" visible="false">
 									<Label text="Bot 1: " class="sapUiTinyMargin"/>
 									<core:Icon 

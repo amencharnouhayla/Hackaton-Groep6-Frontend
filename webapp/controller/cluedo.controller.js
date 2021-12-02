@@ -24,14 +24,42 @@ sap.ui.define([
 			onInit: function () {
 				//FIXME: REQUIRED 1
 				// Load data from const localBaseUrl + "/data" into JSONModel named "cluedoModel" and make it available for the View
-				// After data call success, set image source from model data ("startImage" -> Title HTF, "grondplanImg" -> Grondplan Spel)
+				try {
+					fetch(`${localBaseUrl}/data`)
+					.then(res => res.json())
+					.then(data => {
+						let cluedoModel = new JSONModel(data);
+						this.getView().setModel(cluedoModel, "cluedoModel")
+						// After data call success, set image source from model data ("startImage" -> Title HTF, "grondplanImg" -> Grondplan Spel)
+						this.getView().byId("startImage").setSrc(`${dataBaseUrl}${cluedoModel.getProperty("/others")[0].url}`);
+						this.getView().byId("grondplanImg").setSrc(`${dataBaseUrl}${cluedoModel.getProperty("/grondplannen")[1].url}`);
+					})
+				}
+				catch {
+					MessageToast.show("An error occurred when trying to fetch the game data")
+				}
 			},
 
 			
 			onStartPress: function () {
 				// FIXME: REQUIRED 2
 				// Create new solution to start game using const localBaseUrl + "/new_solution" call
-				// When the solution has been created, call _buildPlayground function & show MessageToast (or something creative) when solution has been created
+				try {
+					fetch(`${localBaseUrl}/new_solution`, {method: 'POST'})
+					.then(res => res.json())
+					.then(data => {
+					// When the solution has been created, call _buildPlayground function & show MessageToast (or something creative) when solution has been created
+						if(data)
+						{
+							this._buildPlayground();
+							MessageToast.show("Let the games begin!")
+						}
+						else MessageToast.show("An error occured when creating a new solution")
+					})
+				}
+				catch {
+					MessageToast.show("An error occured when fetching the new solution")
+				}
 			},
 
 			
@@ -60,13 +88,13 @@ sap.ui.define([
 				// Get the selected item id for wapen, dader, kamer
 				const answer = {
 					"wapen": {
-						"id": "" 
+						"id": this.getView().byId("wapen").getProperty("selectedKey")
 					},
 					"dader": {
-						"id": "" 
+						"id": this.getView().byId("dader").getProperty("selectedKey")
 					},
 					"kamer": {
-						"id": "" 
+						"id": this.getView().byId("kamer").getProperty("selectedKey")
 					}
 				}
 				const oData = {
@@ -92,6 +120,9 @@ sap.ui.define([
 
 						// PLAYER
 						this._displayPlayerGuesses(oData);
+						if (oData.checks.player.wapen && oData.checks.player.dader && oData.checks.player.kamer) {
+							this._endOfGameDialog();
+						}
 						// FIXME: REQUIRED 4
 						// If the player won, show _endOfGameDialog
 						
@@ -115,7 +146,9 @@ sap.ui.define([
 			_endOfGameDialog: function (title, message) {
 				// FIXME: REQUIRED 5
 				// Show a dialog with restart button to inform the player.
-
+				this.getView().byId("valideer").setVisible(false);
+				this.getView().byId("restart").setVisible(true);
+				MessageToast.show("You won!!!")
 				// TODO: BONUS
 				// Maybe add something creative?
 			},
@@ -206,31 +239,31 @@ sap.ui.define([
 			onBibliotheekPress: function () {
 				// FIXME: REQUIRED 3.2
 				// Set the correct room in dropdown
-				const selected = [1, 0, 0, 0, 0, 0, 0, 0, 0];
+				const selected = [0, 1, 0, 0, 0, 0, 0, 0, 0];
 				this._setKamerButtonSelected(selected);
 			},
 			onBiljartkamerPress: function () {
 				// FIXME: REQUIRED 3.3
 				// Set the correct room in dropdown
-				const selected = [0, 1, 0, 0, 0, 0, 0, 0, 0];
+				const selected = [0, 0, 1, 0, 0, 0, 0, 0, 0];
 				this._setKamerButtonSelected(selected);
 			},
 			onEetkamerPress: function () {
 				// FIXME: REQUIRED 3.4
 				// Set the correct room in dropdown
-				const selected = [0, 0, 1, 0, 0, 0, 0, 0, 0];
+				const selected = [0, 0, 0, 1, 0, 0, 0, 0, 0];
 				this._setKamerButtonSelected(selected);
 			},
 			onHalPress: function () {
 				// FIXME: REQUIRED 3.5
 				// Set the correct room in dropdown
-				const selected = [0, 0, 0, 1, 0, 0, 0, 0, 0];
+				const selected = [0, 0, 0, 0, 1, 0, 0, 0, 0];
 				this._setKamerButtonSelected(selected);
 			},
 			onKeukenPress: function () {
 				// FIXME: REQUIRED 3.6
 				// Set the correct room in dropdown
-				const selected = [, 0, 0, 0, 0, 1, 0, 0, 0];
+				const selected = [0, 0, 0, 0, 0, 1, 0, 0, 0];
 				this._setKamerButtonSelected(selected);
 			},
 			onSerrePress: function () {
@@ -281,6 +314,7 @@ sap.ui.define([
 				this.getView().byId("dader").setVisible(true);
 				this.getView().byId("kamer").setVisible(true);
 				this.getView().byId("valideer").setVisible(true);
+				this.getView().byId("restart").setVisible(false);
 				this.getView().byId("wapen").setValue(null);
 				this.getView().byId("dader").setValue(null);
 				this.getView().byId("kamer").setValue(null);
@@ -312,6 +346,7 @@ sap.ui.define([
 				for(let i = 0; i < selected.length; i++){
 					if(selected[i] === 1){
 						rooms[i].setType("Accept");
+						this.getView().byId("kamer").setProperty("selectedKey", i);
 					}
 				}
 			},
